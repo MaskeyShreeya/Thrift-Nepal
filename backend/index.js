@@ -7,12 +7,13 @@ app.use(express.json());
 // Routers
 const userRouter = require("./routes/user");
 const adminRouter = require("./routes/admin");
-const purchaseRouter = require("./routes/purchase");
+const listingRouter = require("./routes/listing");
 
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/purchase", purchaseRouter);
+app.use("/api/v1/listing", listingRouter);
+app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
   res.json({ message: "Event Management API is running!" });

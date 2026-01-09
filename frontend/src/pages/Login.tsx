@@ -5,18 +5,44 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API from '../api/api';
 
 const Login = () => {
   const navigation = useNavigation<any>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // after successful login
-    navigation.replace('Dashboard');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Email and password are required');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await API.post('/user/signin', { email, password });
+      setLoading(false);
+
+      const token = res.data.token;
+      await AsyncStorage.setItem('token', token); // save token for later
+
+      Alert.alert('Success', 'Login successful!');
+      navigation.replace('Dashboard');
+
+    } catch (err: any) {
+      setLoading(false);
+      Alert.alert(
+        'Login Failed',
+        err.response?.data?.message || 'Something went wrong'
+      );
+    }
   };
 
   return (
@@ -49,7 +75,11 @@ const Login = () => {
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
-        <Text style={styles.signInText}>Sign in</Text>
+        {loading ? (
+          <ActivityIndicator color="black" />
+        ) : (
+          <Text style={styles.signInText}>Sign in</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -62,28 +92,10 @@ const Login = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1B181F',
-    padding: 20,
-  },
-  heading: {
-    fontSize: 40,
-    color: 'white',
-    fontWeight: 'bold',
-    marginTop: 70,
-  },
-  subheading: {
-    fontSize: 16,
-    color: '#878787',
-    marginTop: 15,
-  },
-  label: {
-    fontSize: 20,
-    color: 'white',
-    marginBottom: 20,
-    marginTop: 40,
-  },
+  container: { flex: 1, backgroundColor: '#1B181F', padding: 20 },
+  heading: { fontSize: 40, color: 'white', fontWeight: 'bold', marginTop: 70 },
+  subheading: { fontSize: 16, color: '#878787', marginTop: 15 },
+  label: { fontSize: 20, color: 'white', marginBottom: 20, marginTop: 40 },
   inputBox: {
     height: 50,
     borderColor: '#FFFFFF',
@@ -92,11 +104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     color: 'white',
   },
-  forgotText: {
-    color: '#aaa',
-    textAlign: 'right',
-    marginBottom: 20,
-  },
+  forgotText: { color: '#aaa', textAlign: 'right', marginBottom: 20 },
   signInButton: {
     backgroundColor: 'white',
     borderRadius: 8,
@@ -104,19 +112,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  signInText: {
-    color: 'black',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  registerText: {
-    textAlign: 'center',
-    color: 'white',
-  },
-  registerLink: {
-    color: '#1E90FF',
-    fontWeight: 'bold',
-  },
+  signInText: { color: 'black', fontSize: 18, fontWeight: 'bold' },
+  registerText: { textAlign: 'center', color: 'white' },
+  registerLink: { color: '#1E90FF', fontWeight: 'bold' },
 });
 
 export default Login;

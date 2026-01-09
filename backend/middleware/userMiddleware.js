@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { JWT_USER_PASSWORD } = require("../config");
-const { userModel } = require("../db");
+const { User } = require("../db"); // ✅ Correct import
 
 async function userMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -14,11 +14,10 @@ async function userMiddleware(req, res, next) {
   try {
     const decoded = jwt.verify(token, JWT_USER_PASSWORD);
 
-    // Verify that user exists
-    const user = await userModel.findById(decoded.id);
+    const user = await User.findById(decoded.id); // ✅ Use User, not userModel
     if (!user) return res.status(403).json({ message: "User not found" });
 
-    req.userId = user._id; // keeps it clear that this is a user
+    req.userId = user._id;
     next();
   } catch (err) {
     res.status(401).json({ message: "Invalid or expired token" });

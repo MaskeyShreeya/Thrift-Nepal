@@ -1,14 +1,53 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import API from '../api/api'; // axios instance with baseURL: http://10.0.2.2:3000/api/v1
 
-const Register = ({ navigation }: any) => {
+const Register = () => {
+  const navigation = useNavigation<any>();
+
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    console.log({ email, username, password });
-    navigation.replace('Login'); // back to login after register
+  const handleRegister = async () => {
+    if (!email || !username || !password) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await API.post('/user/signup', {
+        email,
+        userName: username,
+        password,
+      });
+
+      setLoading(false);
+      Alert.alert('Success', res.data.message || 'Registered successfully!');
+
+      // Navigate back to login after successful signup
+      navigation.replace('Login');
+    } catch (err: any) {
+      setLoading(false);
+      console.log(err.response?.data || err.message);
+      Alert.alert(
+        'Registration Failed',
+        err.response?.data?.message || 'Something went wrong'
+      );
+    }
   };
 
   return (
@@ -19,10 +58,23 @@ const Register = ({ navigation }: any) => {
       </Text>
 
       <Text style={styles.label}>Email Address</Text>
-      <TextInput style={styles.input} value={email} onChangeText={setEmail} />
+      <TextInput
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        placeholder="Enter your email"
+        placeholderTextColor="#555"
+      />
 
       <Text style={styles.label}>Username</Text>
-      <TextInput style={styles.input} value={username} onChangeText={setUsername} />
+      <TextInput
+        style={styles.input}
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Enter your username"
+        placeholderTextColor="#555"
+      />
 
       <Text style={styles.label}>Password</Text>
       <TextInput
@@ -30,10 +82,16 @@ const Register = ({ navigation }: any) => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        placeholder="Enter your password"
+        placeholderTextColor="#555"
       />
 
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.registerText}>Register</Text>
+        {loading ? (
+          <ActivityIndicator color="#111" />
+        ) : (
+          <Text style={styles.registerText}>Register</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -69,6 +127,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     color: '#fff',
+    marginBottom: 10,
   },
   registerButton: {
     backgroundColor: '#fff',

@@ -1,12 +1,19 @@
-import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import AppNavigator from './src/routes/AppNavigator';
-import { navigationRef } from './src/routes/navigation';
+import { enableScreens } from 'react-native-screens';
+enableScreens();
 
-export default function App() {
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AppNavigator from './src/routes/AppNavigator';
+
+const App = () => {
   return (
-    <NavigationContainer ref={navigationRef}>
-      <AppNavigator />
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
-}
+};
+
+export default App;
