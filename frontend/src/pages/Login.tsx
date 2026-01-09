@@ -92,7 +92,7 @@ const Login = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1B181F', padding: 20 },
+  container: { flex: 1, backgroundColor: '#121212', padding: 20 },
   heading: { fontSize: 40, color: 'white', fontWeight: 'bold', marginTop: 70 },
   subheading: { fontSize: 16, color: '#878787', marginTop: 15 },
   label: { fontSize: 20, color: 'white', marginBottom: 20, marginTop: 40 },

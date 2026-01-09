@@ -9,12 +9,18 @@ const listingSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["electronics", "fashion", "food", "books", "other"], // customize categories
+      enum: ["electronics", "fashion", "food", "books", "other"],
+      required: true,
+    },
+    condition: {
+      type: String,
+      enum: ["new", "like_new", "good", "fair"],
       required: true,
     },
     description: {
       type: String,
       required: true,
+      trim: true,
     },
     location: {
       address: { type: String, required: true },
@@ -25,7 +31,7 @@ const listingSchema = new mongoose.Schema(
     },
     deliveryOption: {
       type: String,
-      enum: ["pick-up", "courier"],
+      enum: ["pick-up", "courier", "both"],
       default: "pick-up",
     },
     price: {
@@ -33,15 +39,21 @@ const listingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    isNegotiable: {
+      type: Boolean,
+      default: false, // false = Non-negotiable, true = Negotiable
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // links to the user who creates the listing
+      ref: "User",
       required: true,
     },
-    imageUrl: String, // optional image
+    imageUrl: {
+      type: String, // or Array if multiple images later
+    },
   },
   {
-    timestamps: true, // createdAt and updatedAt
+    timestamps: true,
   }
 );
 

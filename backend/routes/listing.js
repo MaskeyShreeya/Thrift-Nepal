@@ -30,25 +30,48 @@ const upload = multer({ storage });
 listingRouter.use(userMiddleware); // protect all routes below
 
 // CREATE LISTING
+// CREATE LISTING
 listingRouter.post("/", upload.single("image"), async (req, res) => {
   try {
-    const { title, description, category, price, deliveryOption } = req.body;
-    let location = {};
+    const {
+      title,
+      description,
+      category,
+      price,
+      deliveryOption,
+      condition,
+      isNegotiable,
+    } = req.body;
 
-    // safely parse location, default to empty
+    // Parse location safely
+    let location = {};
     try {
       location = req.body.location ? JSON.parse(req.body.location) : {};
     } catch (err) {
       location = { address: req.body.location || "" };
     }
 
+    // Validate category
+    const validCategories = ["electronics", "fashion", "food", "books", "other"];
+    const finalCategory = validCategories.includes(category) ? category : "other";
+
+    // Validate condition
+    const validConditions = ["new", "like_new", "good", "fair"];
+    const finalCondition = validConditions.includes(condition) ? condition : "good";
+
+    // Handle negotiable boolean
+    const negotiable = isNegotiable === "true" || isNegotiable === true ? true : false;
+
+    // Create the listing
     const listing = await Listing.create({
       title,
       description,
-      category,
+      category: finalCategory,
       price: Number(price),
-      deliveryOption,
+      deliveryOption: deliveryOption || "pick-up",
       location,
+      condition: finalCondition,
+      isNegotiable: negotiable,
       owner: req.userId,
       imageUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
     });
@@ -59,6 +82,7 @@ listingRouter.post("/", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // GET ALL LISTINGS (any user can view)
 listingRouter.get("/", async (req, res) => {

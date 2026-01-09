@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import API from '../api/api'; // axios instance with baseURL: http://10.0.2.2:3000/api/v1
+import { useNavigation } from '@react-navigation/native';
+import API from '../api/api';
 
 const Register = () => {
   const navigation = useNavigation<any>();
@@ -28,7 +30,6 @@ const Register = () => {
 
     try {
       setLoading(true);
-
       const res = await API.post('/user/signup', {
         email,
         userName: username,
@@ -37,12 +38,9 @@ const Register = () => {
 
       setLoading(false);
       Alert.alert('Success', res.data.message || 'Registered successfully!');
-
-      // Navigate back to login after successful signup
       navigation.replace('Login');
     } catch (err: any) {
       setLoading(false);
-      console.log(err.response?.data || err.message);
       Alert.alert(
         'Registration Failed',
         err.response?.data?.message || 'Something went wrong'
@@ -51,99 +49,133 @@ const Register = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create your new account</Text>
-      <Text style={styles.subtitle}>
-        Create an account to start looking for what you need
-      </Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.innerContainer}>
+          {/* Heading */}
+          <Text style={styles.heading}>Create your new account.</Text>
+          <Text style={styles.subheading}>
+            Create an account to start looking for what you need
+          </Text>
 
-      <Text style={styles.label}>Email Address</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        placeholder="Enter your email"
-        placeholderTextColor="#555"
-      />
+          {/* Email */}
+          <Text style={styles.label}>Email Address</Text>
+          <TextInput
+            style={styles.inputBox}
+            placeholder="Enter Email"
+            placeholderTextColor="#aaa"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-      <Text style={styles.label}>Username</Text>
-      <TextInput
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        placeholder="Enter your username"
-        placeholderTextColor="#555"
-      />
+          {/* Username */}
+          <Text style={styles.label}>User Name</Text>
+          <TextInput
+            style={styles.inputBox}
+            placeholder="Enter your username"
+            placeholderTextColor="#aaa"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="words"
+          />
 
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Enter your password"
-        placeholderTextColor="#555"
-      />
+          {/* Password */}
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.inputBox}
+            placeholder="Enter Password"
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
 
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        {loading ? (
-          <ActivityIndicator color="#111" />
-        ) : (
-          <Text style={styles.registerText}>Register</Text>
-        )}
-      </TouchableOpacity>
+          {/* Register Button */}
+          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+            {loading ? (
+              <ActivityIndicator color="black" />
+            ) : (
+              <Text style={styles.registerButtonText}>Register</Text>
+            )}
+          </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.signInText}>Already have an account? Sign In</Text>
-      </TouchableOpacity>
-    </View>
+          {/* Sign In Link */}
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.signInText}>
+              Already have an account?{' '}
+              <Text style={styles.signInLink}>Sign In</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#121212',
+  
+  },
+  innerContainer: {
+    flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    
   },
-  title: {
-    fontSize: 28,
-    color: '#fff',
+  heading: {
+    fontSize: 40,
+    color: 'white',
     fontWeight: 'bold',
+    marginTop: 1,
   },
-  subtitle: {
-    color: '#aaa',
-    marginBottom: 20,
+  subheading: {
+    fontSize: 16,
+    color: '#878787',
+    marginTop: 15,
+    marginBottom: 1,
   },
   label: {
-    color: '#ccc',
-    marginTop: 10,
+    fontSize: 20,
+    color: 'white',
+    marginBottom: 20,
+    marginTop: 30,
   },
-  input: {
+  inputBox: {
+    height: 50,
+    borderColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#555',
     borderRadius: 8,
-    padding: 10,
-    color: '#fff',
-    marginBottom: 10,
+    paddingHorizontal: 15,
+    color: 'white',
+    fontSize: 16,
   },
   registerButton: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 25,
-    marginTop: 20,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    paddingVertical: 15,
     alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 20,
   },
-  registerText: {
-    color: '#111',
+  registerButtonText: {
+    color: 'black',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   signInText: {
-    color: '#aaa',
     textAlign: 'center',
-    marginTop: 20,
+    color: 'white',
+    fontSize: 16,
+  },
+  signInLink: {
+    color: '#1E90FF',
+    fontWeight: 'bold',
   },
 });
 

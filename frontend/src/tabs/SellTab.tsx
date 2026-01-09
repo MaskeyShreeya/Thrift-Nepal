@@ -16,8 +16,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import API from '../api/api';
+import BackIcon from '../assets/back.png'; // your back.png
 
-const SellTab = () => {
+const SellTab = ({ navigation }: any) => {
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -106,6 +107,15 @@ const SellTab = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* BACK BUTTON + TITLE */}
+      <View style={styles.headerBack}>
+        <TouchableOpacity onPress={() => navigation.navigate('HomeTab')}>
+          <Image source={BackIcon} style={styles.backIcon} />
+        </TouchableOpacity>
+        
+      </View>
+      <Text style={styles.headerTitle}>Create Listing</Text>
+
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.label}>Photos</Text>
 
@@ -200,8 +210,8 @@ const SellTab = () => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#121214' },
-  container: { padding: 20 },
-  label: { color: 'white', fontSize: 16, marginTop: 20 },
+  container: { padding: 20, }, // paddingTop to avoid overlap with back button
+  label: { color: 'white', fontSize: 16,  },
   photoButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -219,8 +229,36 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   imagePreview: { width: '100%', height: 200, marginTop: 10, borderRadius: 10 },
-  continueButton: { backgroundColor: 'white', padding: 15, borderRadius: 30, marginTop: 30, alignItems: 'center' },
+  continueButton: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 30,
+    marginTop: 30,
+    alignItems: 'center',
+  },
   continueButtonText: { color: 'black', fontWeight: 'bold', fontSize: 16 },
+
+  // BACK BUTTON + TITLE STYLES
+  headerBack: {
+    position: 'absolute',
+    top: 55,
+    left: 15,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backIcon: {
+    width: 15,
+    height: 25,
+    resizeMode: 'contain',
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: '3%',
+    marginTop: 30,
+  },
 });
 
 export default SellTab;
