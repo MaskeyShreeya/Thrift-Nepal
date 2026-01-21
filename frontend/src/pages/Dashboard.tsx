@@ -6,6 +6,7 @@ import HomeTab from '../tabs/HomeTab';
 import DiscoverTab from '../tabs/DiscoverTab';
 import FavoriteTab from '../tabs/FavoriteTab';
 import CartTab from '../tabs/CartTab';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
@@ -120,13 +121,13 @@ const styles = StyleSheet.create({
   },
   cartIcon: {
     width: 82,
-    height: 82,
+    height: 92,
     resizeMode: 'contain',
      marginBottom:-15,
   },
   sellIcon: {
     width: 80,
-    height: 80,
+    height: 75,
     resizeMode: 'contain',
     marginTop: -1, // pop slightly above navbar
   },

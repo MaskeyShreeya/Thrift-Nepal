@@ -1,66 +1,42 @@
 import React, { useEffect } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  Dimensions, 
-  StatusBar,
-  Image 
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const { width } = Dimensions.get('window');
+const SplashScreen = () => {
+  const navigation = useNavigation<any>();
 
-const SplashScreen = ({ navigation }: any) => {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Login'); // make sure Login is in your navigator
-    }, 3000);
+    const checkLogin = async () => {
+      const token = await AsyncStorage.getItem('token');
 
-    return () => clearTimeout(timer);
+      setTimeout(() => {
+        if (token) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Dashboard' }],
+          });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        }
+      }, 4000); // optional: show splash for 1 second
+    };
+
+    checkLogin();
   }, [navigation]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#121212" />
-      
-      <View style={styles.logoWrapper}>
-        <Image 
-          source={require('../assets/logo.png')} // CLI-friendly import
-          style={styles.logoImage}
-          resizeMode="contain"
-        />
-        <Text style={styles.brandText}>Thrift Nepal</Text>
-      </View>
-      
-
-    </SafeAreaView>
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color="black" />
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#121212', 
-  
-  },
-  logoWrapper: {
-    alignItems: 'center',
-  },
-  logoImage: {
-    width: 300,  // fixed number works in CLI
-    height: 300,
-    marginTop: "50%",
-  },
-  brandText: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginTop: -30,
- 
-  },
-
-});
-
 export default SplashScreen;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
