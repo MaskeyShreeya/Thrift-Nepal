@@ -1,6 +1,5 @@
-// tabs/CartTab.tsx
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -38,7 +37,6 @@ const CartTab = () => {
     }
   };
 
-  // ✅ Refresh cart whenever Cart tab is focused
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -46,46 +44,97 @@ const CartTab = () => {
     }, [])
   );
 
+  const removeItem = async (productId: string) => {
+    let isMounted = true;
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const res = await fetch("http://10.0.2.2:3000/cart/remove", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        if (isMounted) Alert.alert("Success", "Item removed from cart");
+        fetchCart();
+      } else {
+        if (isMounted) Alert.alert("Error", data.message || "Failed to remove item");
+      }
+    } catch (err) {
+      console.log("Remove item error:", err);
+    }
+
+    return () => { isMounted = false; };
+  };
+
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}>
+      <View style={styles.center}>
         <ActivityIndicator size="large" color="#FFF" />
       </View>
     );
   }
 
-  if (cartItems.length === 0) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}>
-        <Text style={{ color: "#fff", fontSize: 16 }}>Your cart is empty</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={{ flex: 1, padding: 12, backgroundColor: "#121212" }}>
-      <FlatList
-        data={cartItems}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.itemRow}>
-            <Image
-              source={{ uri: `http://10.0.2.2:3000${item.productId.imageUrl}` }}
-              style={styles.itemImage}
-            />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.itemTitle}>{item.productId.title}</Text>
-              <Text style={styles.itemPrice}>NPR {item.productId.price}</Text>
-              <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
+    <View style={{ flex: 1, backgroundColor: "#121212" }}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Cart</Text>
+        <View style={styles.headerLine} />
+      </View>
+
+      {cartItems.length === 0 ? (
+        <View style={styles.center}>
+          <Image
+            source={require("../assets/Empty.png")}
+            style={styles.emptyImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.emptyText}>No items selected</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={cartItems}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={{ padding: 12 }}
+          renderItem={({ item }) => (
+            <View style={styles.itemRow}>
+              <Image
+                source={{ uri: `http://10.0.2.2:3000${item.productId.imageUrl}` }}
+                style={styles.itemImage}
+              />
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.itemTitle}>{item.productId.title}</Text>
+                <Text style={styles.itemPrice}>NPR {item.productId.price}</Text>
+                <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => removeItem(item.productId._id)}
+              >
+                <Image
+                  source={require("../assets/delete.png")}
+                  style={styles.deleteIcon}
+                />
+              </TouchableOpacity>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" },
+  header: { paddingTop:1, paddingBottom: 10, alignItems: "center" },
+  headerText: { color: "#fff", fontSize: 20, fontWeight: "600" },
+  headerLine: { height: 1, backgroundColor: "#fff", width: "90%", marginTop: 5 },
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -93,16 +142,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A282C",
     borderRadius: 10,
     padding: 10,
+    position: "relative",
   },
-  itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    backgroundColor: "#444",
-  },
+  emptyImage: { width: 200, height: 200, marginBottom: 20 },
+  emptyText: { color: "#fff", fontSize: 24, fontWeight: "600" },
+  itemImage: { width: 80, height: 80, borderRadius: 10, backgroundColor: "#444" },
   itemTitle: { color: "#fff", fontSize: 16, fontWeight: "600" },
   itemPrice: { color: "#4caf50", fontSize: 15, marginTop: 4 },
   itemQuantity: { color: "#fff", fontSize: 14, marginTop: 2 },
+  deleteButton: { position: "absolute", bottom: 9, right: 10 },
+  deleteIcon: { width: 24, height: 24 },
 });
 
 export default CartTab;

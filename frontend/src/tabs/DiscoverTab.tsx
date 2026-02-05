@@ -13,7 +13,7 @@ const DiscoverTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
+  container: { padding: 1 },
   text: { color: 'white', fontSize: 18 },
 });
 

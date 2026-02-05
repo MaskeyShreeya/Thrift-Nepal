@@ -34,6 +34,36 @@ productId = new mongoose.Types.ObjectId(productId);
   await cart.save();
   res.json({ message: "Item added to cart" });
 });
+// DELETE ITEM FROM CART
+router.post("/remove", userMiddleware, async (req, res) => {
+  const userId = req.userId;
+  let { productId } = req.body;
+
+  if (!productId) {
+    return res.status(400).json({ message: "Product ID is required" });
+  }
+
+  // Convert string to ObjectId
+  productId = new mongoose.Types.ObjectId(productId);
+
+  try {
+    const cart = await Cart.findOne({ userId });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Filter out the item to remove
+    cart.items = cart.items.filter(
+      (item) => item.productId.toString() !== productId.toString()
+    );
+
+    await cart.save();
+    res.json({ message: "Item removed from cart", cart });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to remove item from cart" });
+  }
+});
 
 
 // GET CART

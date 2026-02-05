@@ -9,12 +9,14 @@ const userRouter = require("./routes/user");
 const adminRouter = require("./routes/admin");
 const listingRouter = require("./routes/listing");
 const cartRouter = require("./routes/cart");
-
+const favoritesRouter = require("./routes/favorites");
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/listing", listingRouter);
 app.use("/cart", cartRouter);
+app.use("/api/v1/favorites", favoritesRouter);
+
 app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {

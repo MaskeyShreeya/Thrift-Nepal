@@ -11,8 +11,7 @@ import {
   StyleSheet
 } from "react-native";
 import API from "../api/api";
-import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface RouteParams {
@@ -35,69 +34,76 @@ interface Listing {
 const ItemDetails = () => {
   const route = useRoute();
   const { listingId } = route.params as RouteParams;
+  const navigation = useNavigation<any>();
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation<any>();
 
   useEffect(() => {
+    let isMounted = true; // ✅ prevent state updates if unmounted
     const fetchListing = async () => {
       try {
         const res = await API.get(`/listing/${listingId}`);
-        setListing(res.data.listing);
+        if (isMounted) setListing(res.data.listing);
       } catch (err) {
         console.error("Error fetching item:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     fetchListing();
+    return () => { isMounted = false; };
   }, [listingId]);
 
-const addToCart = async () => {
-  try {
-    const token = await AsyncStorage.getItem("token");
-    if (!token) {
-      Alert.alert("Error", "User not logged in");
-      return;
+  const addToCart = async () => {
+    let isMounted = true;
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        if (isMounted) Alert.alert("Error", "User not logged in");
+        return;
+      }
+
+      const res = await fetch("http://10.0.2.2:3000/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: listing?._id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to add to cart");
+      }
+
+      if (isMounted) {
+        Alert.alert("Success", "Item added to cart", [
+          {
+            text: "Go to Cart",
+            onPress: () => navigation.navigate("Dashboard", { tab: "Cart" }),
+          },
+          { text: "Continue Shopping", style: "cancel" },
+        ]);
+      }
+    } catch (error: any) {
+      console.log("Add to cart failed:", error);
+      if (isMounted) Alert.alert("Error", error.message || "Failed to add to cart");
     }
+  };
 
-    const res = await fetch("http://10.0.2.2:3000/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        productId: listing?._id,
-      }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "Failed to add to cart");
-    }
-Alert.alert("Success", "Item added to cart", [
-  {
-    text: "Go to Cart",
-    onPress: () => navigation.navigate("Dashboard", { tab: "Cart" }),
-  },
-  { text: "Continue Shopping", style: "cancel" },
-]);
-
-
-  } catch (error: any) {
-    console.log("Add to cart failed:", error);
-    Alert.alert("Error", error.message || "Failed to add to cart");
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#FFF" />
+      </View>
+    );
   }
-};
-
 
   if (!listing) {
     return (
-      <View
-        style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}
-      >
+      <View style={styles.center}>
         <Text style={{ color: "#fff" }}>Item not found</Text>
       </View>
     );
@@ -105,12 +111,11 @@ Alert.alert("Success", "Item added to cart", [
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
+      {/* Header */}
       <View style={styles.head}>
-        <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}
->
+        <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
           <Image source={require("../assets/back.png")} />
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.report} onPress={() => console.log("Report pressed")}>
           <Image source={require("../assets/report.png")} />
         </TouchableOpacity>
@@ -118,11 +123,14 @@ Alert.alert("Success", "Item added to cart", [
 
       <View style={styles.backLine} />
 
+      {/* Main Image */}
       <Image
         source={{ uri: `http://10.0.2.2:3000${listing.imageUrl}` }}
         style={styles.mainImage}
         resizeMode="cover"
       />
+
+      {/* Small Image + Price & Condition */}
       <View style={styles.view}>
         <Image
           source={{ uri: `http://10.0.2.2:3000${listing.imageUrl}` }}
@@ -137,11 +145,12 @@ Alert.alert("Success", "Item added to cart", [
 
       <View style={styles.backLine} />
 
+      {/* Seller Info + Add to Cart */}
       <View style={styles.sellerRow}>
         <Image source={require("../assets/profile.png")} style={styles.avatar} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.sellerName}>{listing.owner.userName}</Text>
-          <Text style={styles.sellerContact}>{listing.owner.email}</Text>
+          <Text style={styles.sellerName}>{listing.owner?.userName || "Unknown Seller"}</Text>
+          <Text style={styles.sellerContact}>{listing.owner?.email || "No contact available"}</Text>
         </View>
         <TouchableOpacity style={styles.addToCartBtn} onPress={addToCart}>
           <Text style={styles.addToCartText}>Add to cart</Text>
@@ -151,6 +160,7 @@ Alert.alert("Success", "Item added to cart", [
       <Text style={styles.title}>{listing.title}</Text>
       <View style={styles.backLine} />
 
+      {/* Description, Chat, Review */}
       <View style={styles.slider}>
         <View>
           <Text style={styles.sectionTitle}>Description</Text>
@@ -167,6 +177,7 @@ Alert.alert("Success", "Item added to cart", [
         </View>
       </View>
 
+      {/* General Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>General</Text>
         <View style={styles.generalCard}>
@@ -193,6 +204,7 @@ Alert.alert("Success", "Item added to cart", [
         </View>
       </View>
 
+      {/* Specification */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Specification</Text>
         <View style={styles.generalCard}>
@@ -221,6 +233,7 @@ Alert.alert("Success", "Item added to cart", [
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#121212", padding: 12 },
