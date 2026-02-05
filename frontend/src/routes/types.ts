@@ -13,5 +13,6 @@ export type RootStackParamList = {
   SellListing: { formData: any };
   Profile: undefined;
   ItemDetails: { listingId: string };
+  cart: undefined;
 
 };

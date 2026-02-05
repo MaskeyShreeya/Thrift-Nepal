@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import API from "../api/api";
 import { useNavigation } from "@react-navigation/native";
+import Header from '../components/Header';
 
 const { width } = Dimensions.get("window");
 
@@ -65,7 +66,9 @@ const HomeTab = () => {
   );
 
   return (
+    
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
+       <Header />
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color="#FFF" />

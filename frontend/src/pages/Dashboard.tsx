@@ -1,25 +1,34 @@
 // pages/Dashboard.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import Header from '../components/Header';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+
 import HomeTab from '../tabs/HomeTab';
 import DiscoverTab from '../tabs/DiscoverTab';
 import FavoriteTab from '../tabs/FavoriteTab';
 import CartTab from '../tabs/CartTab';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-
-// Import images from assets
 import HomeIcon from '../assets/home.png';
 import DiscoverIcon from '../assets/discover.png';
 import FavoriteIcon from '../assets/favorite.png';
 import CartIcon from '../assets/cart.png';
 import SellIcon from '../assets/sell.png';
 
+type TabType = 'Home' | 'Discover' | 'Favorite' | 'Cart';
+
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState<'Home' | 'Discover' | 'Favorite' | 'Cart'>('Home');
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+
+  // ✅ READ TAB FROM NAVIGATION PARAMS
+  const [activeTab, setActiveTab] = useState<TabType>('Home');
+
+  useEffect(() => {
+    if (route.params?.tab) {
+      setActiveTab(route.params.tab);
+    }
+  }, [route.params?.tab]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -31,10 +40,12 @@ const Dashboard = () => {
         return <FavoriteTab />;
       case 'Cart':
         return <CartTab />;
+      default:
+        return <HomeTab />;
     }
   };
 
-  const tabs = ['Home', 'Discover', 'Sell', 'Favorite', 'Cart'];
+  const tabs: (TabType | 'Sell')[] = ['Home', 'Discover', 'Sell', 'Favorite', 'Cart'];
 
   const icons: Record<string, any> = {
     Home: HomeIcon,
@@ -44,17 +55,8 @@ const Dashboard = () => {
     Sell: SellIcon,
   };
 
-  const iconStyles: Record<string, any> = {
-    Home: styles.homeIcon,
-    Discover: styles.discoverIcon,
-    Favorite: styles.favoriteIcon,
-    Cart: styles.cartIcon,
-    Sell: styles.sellIcon,
-  };
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#121212' }}>
-      <Header />
+    <SafeAreaView style={styles.container}>
       <View style={{ flex: 1 }}>{renderContent()}</View>
 
       <View style={styles.navBar}>
@@ -70,15 +72,15 @@ const Dashboard = () => {
                 if (isSell) {
                   navigation.navigate('SellListing');
                 } else {
-                  setActiveTab(tab as any);
+                  setActiveTab(tab as TabType);
                 }
               }}
             >
               <Image
                 source={icons[tab]}
                 style={[
-                  iconStyles[tab],
-                  !isSell && isActive ? styles.navIconActive : null,
+                  styles.icon,
+                  isActive && !isSell && { tintColor: '#fff' },
                 ]}
               />
             </TouchableOpacity>
@@ -89,52 +91,35 @@ const Dashboard = () => {
   );
 };
 
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+
   navBar: {
     flexDirection: 'row',
     backgroundColor: '#181818',
     paddingVertical: 10,
     borderTopWidth: 0.5,
     borderTopColor: '#333',
-    alignItems: 'center',
     justifyContent: 'space-around',
-     marginBottom:-15,
-  },
-  navItem: { flex: 1, alignItems: 'center' },
-
-  // Individual icon styles
-  homeIcon: {
-    width: 50,
-    height: 80,
-   
-  },
-  discoverIcon: {
-    width: 60,
-    height: 80,
-  },
-  favoriteIcon: {
-    width: 82,
-    height: 92,
-    resizeMode: 'contain',
-    marginBottom:-15,
-    
-  },
-  cartIcon: {
-    width: 82,
-    height: 92,
-    resizeMode: 'contain',
-     marginBottom:-15,
-  },
-  sellIcon: {
-    width: 80,
-    height: 75,
-    resizeMode: 'contain',
-    marginTop: -1, // pop slightly above navbar
+    marginBottom: -15,
   },
 
-  navIconActive: {
-    tintColor: '#FFF',
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
   },
+
+  homeIcon: { width: 50, height: 80 },
+  discoverIcon: { width: 60, height: 80 },
+  favoriteIcon: { width: 82, height: 92, resizeMode: 'contain', marginBottom: -15 },
+  cartIcon: { width: 82, height: 92, resizeMode: 'contain', marginBottom: -15 },
+  sellIcon: { width: 80, height: 75, resizeMode: 'contain', marginTop: -1 },
+
+  navIconActive: { tintColor: '#FFF' },
 });
 
 export default Dashboard;

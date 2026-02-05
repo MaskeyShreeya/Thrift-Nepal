@@ -4,14 +4,16 @@ import {
   View,
   Text,
   Image,
-  StyleSheet,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
+  StyleSheet
 } from "react-native";
 import API from "../api/api";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface RouteParams {
   listingId: string;
@@ -52,158 +54,170 @@ const ItemDetails = () => {
     fetchListing();
   }, [listingId]);
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}>
-        <ActivityIndicator size="large" color="#FFF" />
-      </View>
-    );
+const addToCart = async () => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) {
+      Alert.alert("Error", "User not logged in");
+      return;
+    }
+
+    const res = await fetch("http://10.0.2.2:3000/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        productId: listing?._id,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || "Failed to add to cart");
+    }
+Alert.alert("Success", "Item added to cart", [
+  {
+    text: "Go to Cart",
+    onPress: () => navigation.navigate("Dashboard", { tab: "Cart" }),
+  },
+  { text: "Continue Shopping", style: "cancel" },
+]);
+
+
+  } catch (error: any) {
+    console.log("Add to cart failed:", error);
+    Alert.alert("Error", error.message || "Failed to add to cart");
   }
+};
+
 
   if (!listing) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}>
+      <View
+        style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" }}
+      >
         <Text style={{ color: "#fff" }}>Item not found</Text>
       </View>
     );
   }
 
   return (
- <ScrollView 
-  style={styles.container} 
-  contentContainerStyle={{ paddingBottom: 30 }} // extra 30px space at the bottom
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
+      <View style={styles.head}>
+        <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}
 >
-<View style={styles.head}>
-  <TouchableOpacity 
-    style={styles.back} 
-    onPress={() => navigation.navigate("Dashboard")}
-  >
-    <Image source={require("../assets/back.png")} />
-  </TouchableOpacity>
+          <Image source={require("../assets/back.png")} />
+        </TouchableOpacity>
 
-  <TouchableOpacity 
-    style={styles.report} 
-    onPress={() => console.log("Report pressed")}
-  >
-    <Image source={require("../assets/report.png")} />
-  </TouchableOpacity>
-</View>
+        <TouchableOpacity style={styles.report} onPress={() => console.log("Report pressed")}>
+          <Image source={require("../assets/report.png")} />
+        </TouchableOpacity>
+      </View>
 
-    
+      <View style={styles.backLine} />
 
-    {/* Thin white line under back button */}
-    <View style={styles.backLine} />
-
-    {/* Item Image */}
-    <Image
-      source={{ uri: `http://10.0.2.2:3000${listing.imageUrl}` }}
-      style={styles.mainImage}
-      resizeMode="cover"
-    />
-    <View style ={styles.view}>
       <Image
-      source={{ uri: `http://10.0.2.2:3000${listing.imageUrl}` }}
-      style={styles.smallImage}
-      resizeMode="cover"
-    />
-       {/* Title & Price */}
-       <View>
-      <Text style={styles.price}>NPR {listing.price}</Text>
-      <Text style={styles.condition}>{listing.condition}</Text>
-      </View>
-      </View>
-
-     <View style={styles.backLine} />
-
-      {/* Seller info and price */}
-      <View style={styles.sellerRow}>
+        source={{ uri: `http://10.0.2.2:3000${listing.imageUrl}` }}
+        style={styles.mainImage}
+        resizeMode="cover"
+      />
+      <View style={styles.view}>
         <Image
-          source={require("../assets/profile.png")} // fallback avatar
-          style={styles.avatar}
+          source={{ uri: `http://10.0.2.2:3000${listing.imageUrl}` }}
+          style={styles.smallImage}
+          resizeMode="cover"
         />
+        <View>
+          <Text style={styles.price}>NPR {listing.price}</Text>
+          <Text style={styles.condition}>{listing.condition}</Text>
+        </View>
+      </View>
+
+      <View style={styles.backLine} />
+
+      <View style={styles.sellerRow}>
+        <Image source={require("../assets/profile.png")} style={styles.avatar} />
         <View style={{ flex: 1 }}>
           <Text style={styles.sellerName}>{listing.owner.userName}</Text>
           <Text style={styles.sellerContact}>{listing.owner.email}</Text>
         </View>
-        <TouchableOpacity style={styles.addToCartBtn}>
+        <TouchableOpacity style={styles.addToCartBtn} onPress={addToCart}>
           <Text style={styles.addToCartText}>Add to cart</Text>
         </TouchableOpacity>
       </View>
+
       <Text style={styles.title}>{listing.title}</Text>
-         <View style={styles.backLine} />
-      {/* Description */}
+      <View style={styles.backLine} />
+
       <View style={styles.slider}>
         <View>
-            <View>
-        <Text style={styles.sectionTitle}>Description</Text>
-        <View style ={styles.line}></View>
-        </View>
-        <Text style={styles.sectionText}>{listing.description}</Text>
+          <Text style={styles.sectionTitle}>Description</Text>
+          <View style={styles.line}></View>
+          <Text style={styles.sectionText}>{listing.description}</Text>
         </View>
         <View>
-        <Text style={styles.chat}>Chat</Text>
-        <View style ={styles.chatline}></View>
+          <Text style={styles.chat}>Chat</Text>
+          <View style={styles.chatline}></View>
         </View>
         <View>
-        <Text style={styles.review}>Review</Text>
-        <View style ={styles.reviewline}></View>
+          <Text style={styles.review}>Review</Text>
+          <View style={styles.reviewline}></View>
         </View>
       </View>
 
-     {/* General info */}
-<View style={styles.section}>
-  <Text style={styles.sectionTitle}>General</Text>
-  <View style={styles.generalCard}>
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>AD ID</Text>
-      <Text style={styles.specValue}>{listing._id}</Text>
-    </View>
-    <View style={styles.lineDivider} />
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Location</Text>
-      <Text style={styles.specValue}>{listing.location.address}</Text>
-    </View>
-    <View style={styles.lineDivider} />
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Delivery</Text>
-      <Text style={styles.specValue}>{listing.deliveryOption}</Text>
-    </View>
-    <View style={styles.lineDivider} />
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Negotiable</Text>
-      <Text style={styles.specValue}>{listing.isNegotiable ? "Yes" : "No"}</Text>
-    </View>
-    <View style={styles.lineDivider} />
-  </View>
-</View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>General</Text>
+        <View style={styles.generalCard}>
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>AD ID</Text>
+            <Text style={styles.specValue}>{listing._id}</Text>
+          </View>
+          <View style={styles.lineDivider} />
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Location</Text>
+            <Text style={styles.specValue}>{listing.location.address}</Text>
+          </View>
+          <View style={styles.lineDivider} />
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Delivery</Text>
+            <Text style={styles.specValue}>{listing.deliveryOption}</Text>
+          </View>
+          <View style={styles.lineDivider} />
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Negotiable</Text>
+            <Text style={styles.specValue}>{listing.isNegotiable ? "Yes" : "No"}</Text>
+          </View>
+          <View style={styles.lineDivider} />
+        </View>
+      </View>
 
-{/* Specification */}
-<View style={styles.section}>
-  <Text style={styles.sectionTitle}>Specification</Text>
-  <View style={styles.generalCard}>
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Delivery Charge</Text>
-      <Text style={styles.specValue}>150</Text>
-    </View>
-    <View style={styles.lineDivider} />
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Type</Text>
-      <Text style={styles.specValue}>{listing.title}</Text>
-    </View>
-    <View style={styles.lineDivider} />
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Size</Text>
-      <Text style={styles.specValue}>Free Size</Text>
-    </View>
-    <View style={styles.lineDivider} />
-    <View style={styles.specRow}>
-      <Text style={styles.specLabel}>Color</Text>
-      <Text style={styles.specValue}>White</Text>
-    </View>
-    <View style={styles.lineDivider} />
-  </View>
-</View>
-
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Specification</Text>
+        <View style={styles.generalCard}>
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Delivery Charge</Text>
+            <Text style={styles.specValue}>150</Text>
+          </View>
+          <View style={styles.lineDivider} />
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Type</Text>
+            <Text style={styles.specValue}>{listing.title}</Text>
+          </View>
+          <View style={styles.lineDivider} />
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Size</Text>
+            <Text style={styles.specValue}>Free Size</Text>
+          </View>
+          <View style={styles.lineDivider} />
+          <View style={styles.specRow}>
+            <Text style={styles.specLabel}>Color</Text>
+            <Text style={styles.specValue}>White</Text>
+          </View>
+          <View style={styles.lineDivider} />
+        </View>
+      </View>
     </ScrollView>
   );
 };
